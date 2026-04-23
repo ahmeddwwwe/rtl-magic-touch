@@ -224,6 +224,19 @@
   overflow-x: clip;
 }
 
+/* Mobile + RTL hardening: prevent any element from forcing horizontal scroll */
+html, body { max-width: 100%; }
+#__root { overflow-x: clip; max-width: 100vw; }
+@media (max-width: 767px) {
+  /* Neutralize full-bleed tricks on mobile so nothing escapes the viewport */
+  [style*="margin-inline: calc(-50vw"],
+  [style*="marginInline: calc(-50vw"] {
+    margin-inline: 0 !important;
+    width: 100% !important;
+  }
+  .w-screen { width: 100% !important; }
+}
+
 /* Hero breathing background */
 @keyframes hero-breathe {
   0%, 100% { transform: scale(1); }
