@@ -438,3 +438,37 @@ h1, h2, .font-display {
   .aurora-bg::before, .aurora-bg::after { animation: none; }
   .reveal, .reveal-left, .reveal-right, .reveal-zoom, .reveal-blur { opacity: 1 !important; transform: none !important; filter: none !important; }
 }
+
+/* ============================================================
+   Full-page Scroll Snapping (TikTok / Reels-style)
+   Applied to the document scroller so the fixed Navbar,
+   IntersectionObserver reveals, and SnowCanvas keep working.
+   We use `proximity` instead of `mandatory` so tall sections
+   (Gallery, Pricing, Services) remain fully readable on mobile
+   without trapping the user mid-scroll.
+============================================================ */
+html {
+  scroll-snap-type: y proximity;
+  scroll-behavior: smooth;
+  scroll-padding-top: 4rem; /* offset for the fixed Navbar */
+}
+
+.snap-section,
+main > section,
+main > div > section {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+/* Disable snapping when the user prefers reduced motion, or when
+   the on-screen keyboard / small viewports would make snapping feel
+   janky. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-snap-type: none; scroll-behavior: auto; }
+  .snap-section { scroll-snap-align: none; }
+}
+
+/* Avoid snap-jumping while the user interacts with modals/dialogs */
+body:has([data-state="open"][role="dialog"]) {
+  scroll-snap-type: none;
+}
