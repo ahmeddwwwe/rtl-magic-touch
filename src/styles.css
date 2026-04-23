@@ -203,6 +203,27 @@
   filter: none;
 }
 
+/* RTL: flip horizontal reveal animations so they enter from the correct side */
+[dir="rtl"] .reveal-left {
+  transform: translateX(60px) !important;
+}
+[dir="rtl"] .reveal-right {
+  transform: translateX(-60px) !important;
+}
+[dir="rtl"] .reveal-left.in-view,
+[dir="rtl"] .reveal-right.in-view {
+  transform: translateX(0) !important;
+}
+
+/* RTL: prevent horizontal viewport shift caused by overflow-x: hidden on body */
+[dir="rtl"] body {
+  overflow-x: hidden;
+}
+[dir="rtl"] #__root,
+[dir="rtl"] .min-h-screen {
+  overflow-x: clip;
+}
+
 /* Hero breathing background */
 @keyframes hero-breathe {
   0%, 100% { transform: scale(1); }
