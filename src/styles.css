@@ -453,7 +453,9 @@ html {
   scroll-padding-top: 4rem; /* offset for the fixed Navbar */
 }
 
-.snap-section {
+.snap-section,
+main > section,
+main > div > section {
   scroll-snap-align: start;
   scroll-snap-stop: normal;
 }
