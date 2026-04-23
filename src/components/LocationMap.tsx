@@ -18,7 +18,7 @@ export const LocationMap = () => {
           {t("contact.location.value")}
         </div>
         <a
-          href="https://www.openstreetmap.org/?mlat=28.5604&mlon=33.9485#map=12/28.5604/33.9485"
+          href="https://maps.google.com/?q=28.5637,33.9519"
           target="_blank"
           rel="noopener noreferrer"
           className="absolute top-4 end-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-gradient-ice text-night text-xs font-black px-4 py-2 shadow-ice hover:-translate-y-0.5 transition-spring"

@@ -79,8 +79,7 @@ export const VideoShowcase = () => {
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
       onTouchStart={() => setShowControls((s) => !s)}
-      className="relative w-screen h-[100svh] bg-night overflow-hidden"
-      style={{ marginInline: "calc(-50vw + 50%)" }}
+      className="relative w-full md:w-screen h-[100svh] bg-night overflow-hidden md:[margin-inline:calc(50%-50vw)]"
     >
       <video
         ref={videoRef}
