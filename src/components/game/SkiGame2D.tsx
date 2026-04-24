@@ -833,6 +833,16 @@ export const SkiGame2D = () => {
       drawSkyline(ctx, w, horizonY, camY * 0.08, "#b8c8dc", 0.35, 1);
       drawSkyline(ctx, w, horizonY, camY * 0.16, "#d4dde7", 0.22, 2);
 
+      // Drifting volumetric clouds (skip in heavy fog)
+      if (level.fog < 0.4) drawClouds(ctx, w, horizonY, s.t, level.fog);
+
+      // Atmospheric haze where sky meets ground
+      const haze = ctx.createLinearGradient(0, horizonY - 40, 0, horizonY + 30);
+      haze.addColorStop(0, "rgba(255,255,255,0)");
+      haze.addColorStop(1, "rgba(255,255,255,0.45)");
+      ctx.fillStyle = haze;
+      ctx.fillRect(0, horizonY - 40, w, 70);
+
       // Ground
       const ground = ctx.createLinearGradient(0, horizonY, 0, h);
       ground.addColorStop(0, level.groundTint);
@@ -916,12 +926,38 @@ export const SkiGame2D = () => {
         ctx.fillRect(0, 0, w, h);
       }
 
-      // Vignette
-      const vg = ctx.createRadialGradient(w / 2, h / 2, h * 0.4, w / 2, h / 2, h * 0.9);
+      // Color grading — subtle warm tint at top, cool at bottom
+      const cg = ctx.createLinearGradient(0, 0, 0, h);
+      cg.addColorStop(0, "rgba(255,210,160,0.06)");
+      cg.addColorStop(0.5, "rgba(255,255,255,0)");
+      cg.addColorStop(1, "rgba(80,120,180,0.08)");
+      ctx.fillStyle = cg;
+      ctx.globalCompositeOperation = "overlay";
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = "source-over";
+
+      // Cinematic vignette (radial + corner)
+      const vg = ctx.createRadialGradient(w / 2, h / 2, h * 0.35, w / 2, h / 2, h * 0.95);
       vg.addColorStop(0, "rgba(0,0,0,0)");
-      vg.addColorStop(1, "rgba(10,20,35,0.4)");
+      vg.addColorStop(0.6, "rgba(10,20,35,0.15)");
+      vg.addColorStop(1, "rgba(5,10,20,0.55)");
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, w, h);
+
+      // Subtle film-grain noise (cheap, 1 pass)
+      ctx.save();
+      ctx.globalAlpha = 0.04;
+      ctx.fillStyle = "#ffffff";
+      const grainStep = 7;
+      const seed = Math.floor(s.t * 30);
+      for (let gx = 0; gx < w; gx += grainStep) {
+        for (let gy = 0; gy < h; gy += grainStep) {
+          if (((gx * 73856093) ^ (gy * 19349663) ^ seed) % 17 === 0) {
+            ctx.fillRect(gx, gy, 1, 1);
+          }
+        }
+      }
+      ctx.restore();
     };
 
     raf = requestAnimationFrame(loop);
@@ -1505,6 +1541,46 @@ const VictoryScreen = ({ totalScore, best, onPlayAgain, onMenu }: { totalScore: 
 // Drawing primitives
 // ============================================================
 
+// Drifting volumetric clouds — soft, layered, parallax
+function drawClouds(
+  ctx: CanvasRenderingContext2D,
+  w: number, horizonY: number,
+  t: number, fog: number,
+) {
+  ctx.save();
+  const baseAlpha = 0.55 - fog * 0.6;
+  if (baseAlpha <= 0) { ctx.restore(); return; }
+  // Three layers at different depths/speeds
+  const layers = [
+    { count: 3, speed: 8,  yBase: horizonY * 0.18, scale: 1.6, alpha: baseAlpha * 0.5 },
+    { count: 4, speed: 14, yBase: horizonY * 0.34, scale: 1.2, alpha: baseAlpha * 0.7 },
+    { count: 5, speed: 22, yBase: horizonY * 0.55, scale: 0.9, alpha: baseAlpha * 0.85 },
+  ];
+  for (let li = 0; li < layers.length; li++) {
+    const L = layers[li];
+    for (let i = 0; i < L.count; i++) {
+      const seed = i * 173 + li * 37;
+      const phase = (seed * 0.013) % 1;
+      const cx = ((phase * w + t * L.speed) % (w + 240)) - 120;
+      const cy = L.yBase + Math.sin(t * 0.2 + seed) * 8;
+      const rx = (50 + (seed % 40)) * L.scale;
+      const ry = rx * 0.42;
+      // Soft puffy cloud built from 4 stacked ellipses
+      const grd = ctx.createRadialGradient(cx, cy - ry * 0.3, 4, cx, cy, rx);
+      grd.addColorStop(0, `rgba(255,255,255,${L.alpha})`);
+      grd.addColorStop(0.6, `rgba(245,250,255,${L.alpha * 0.6})`);
+      grd.addColorStop(1, `rgba(220,232,245,0)`);
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.ellipse(cx - rx * 0.45, cy + ry * 0.2, rx * 0.65, ry * 0.85, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + rx * 0.4,  cy + ry * 0.25, rx * 0.55, ry * 0.7, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy - ry * 0.1, rx * 0.85, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 function drawSkyline(
   ctx: CanvasRenderingContext2D,
   w: number, horizonY: number,
@@ -1514,39 +1590,108 @@ function drawSkyline(
   layer: number,
 ) {
   const amp = horizonY * heightRatio;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(0, horizonY);
   const peaks = 6 + layer * 2;
   const phase = -camOffset * 0.01 + layer * 1.3;
+
+  // Pre-compute peak y values once
+  const ys: number[] = [];
   for (let i = 0; i <= peaks; i++) {
-    const x = (i / peaks) * w;
     const n = Math.sin(phase + i * 1.7) * 0.5 + Math.sin(phase + i * 0.8 + layer) * 0.5;
-    const y = horizonY - (n * amp * 0.5 + amp * 0.45);
-    if (i === 0) ctx.lineTo(x, y);
-    else {
-      const px = ((i - 0.5) / peaks) * w;
-      const pn = Math.sin(phase + (i - 0.5) * 1.7) * 0.5 + Math.sin(phase + (i - 0.5) * 0.8 + layer) * 0.5;
-      const py = horizonY - (pn * amp * 0.5 + amp * 0.45);
-      ctx.quadraticCurveTo(px, py - 6, x, y);
-    }
+    ys[i] = horizonY - (n * amp * 0.5 + amp * 0.45);
+  }
+
+  // Vertical gradient on the mountain body for depth (lighter at top, darker at base)
+  const topY = Math.min(...ys);
+  const grd = ctx.createLinearGradient(0, topY, 0, horizonY);
+  // Lighten the base color at top, darken at bottom
+  grd.addColorStop(0, lighten(color, 0.18));
+  grd.addColorStop(0.55, color);
+  grd.addColorStop(1, darken(color, 0.18));
+  ctx.fillStyle = grd;
+
+  ctx.beginPath();
+  ctx.moveTo(0, horizonY);
+  ctx.lineTo(0, ys[0]);
+  for (let i = 1; i <= peaks; i++) {
+    const x = (i / peaks) * w;
+    const px = ((i - 0.5) / peaks) * w;
+    const py = (ys[i - 1] + ys[i]) * 0.5 - 6;
+    ctx.quadraticCurveTo(px, py, x, ys[i]);
   }
   ctx.lineTo(w, horizonY);
   ctx.closePath();
   ctx.fill();
-  if (layer === 2) {
-    ctx.fillStyle = "rgba(255,255,255,0.7)";
+
+  // Shaded faces — subtle dark ridge on the right side of every peak
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = darken(color, 0.55);
+  for (let i = 0; i <= peaks; i++) {
+    const x = (i / peaks) * w;
+    const y = ys[i];
+    const next = ys[Math.min(peaks, i + 1)];
+    const baseY = horizonY;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + (w / peaks) * 0.48, (y + next) * 0.5 + 2);
+    ctx.lineTo(x + (w / peaks) * 0.45, baseY);
+    ctx.lineTo(x, baseY);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Snow caps — generous on far layer, subtle on closer layers
+  if (layer >= 1) {
+    const capAlpha = layer === 2 ? 0.92 : 0.55;
+    ctx.fillStyle = `rgba(255,255,255,${capAlpha})`;
     for (let i = 0; i <= peaks; i++) {
       const x = (i / peaks) * w;
-      const n = Math.sin(phase + i * 1.7) * 0.5 + Math.sin(phase + i * 0.8 + layer) * 0.5;
-      const y = horizonY - (n * amp * 0.5 + amp * 0.45);
+      const y = ys[i];
+      const capW = layer === 2 ? 22 : 16;
       ctx.beginPath();
-      ctx.moveTo(x - 14, y + 10);
-      ctx.quadraticCurveTo(x, y - 2, x + 14, y + 10);
-      ctx.quadraticCurveTo(x, y + 6, x - 14, y + 10);
+      ctx.moveTo(x - capW, y + 12);
+      ctx.quadraticCurveTo(x - capW * 0.5, y - 4, x, y - 1);
+      ctx.quadraticCurveTo(x + capW * 0.5, y - 5, x + capW, y + 12);
+      ctx.quadraticCurveTo(x + capW * 0.4, y + 6, x, y + 8);
+      ctx.quadraticCurveTo(x - capW * 0.4, y + 6, x - capW, y + 12);
+      ctx.closePath();
       ctx.fill();
+      // Highlight ridge
+      if (layer === 2) {
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(x - capW * 0.6, y + 4);
+        ctx.quadraticCurveTo(x - 2, y - 3, x + capW * 0.4, y + 1);
+        ctx.quadraticCurveTo(x, y + 2, x - capW * 0.6, y + 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
     }
   }
+}
+
+// Color utilities — clamp + adjust hex/rgb-ish color
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const h = hex.replace("#", "");
+  const v = h.length === 3
+    ? h.split("").map((c) => c + c).join("")
+    : h;
+  const num = parseInt(v, 16);
+  return { r: (num >> 16) & 0xff, g: (num >> 8) & 0xff, b: num & 0xff };
+}
+function lighten(hex: string, amt: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  const f = (c: number) => Math.round(c + (255 - c) * amt);
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
+}
+function darken(hex: string, amt: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  const f = (c: number) => Math.round(c * (1 - amt));
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
 }
 
 function drawForestSides(
@@ -1579,24 +1724,48 @@ function drawForestSides(
 }
 
 function drawMiniTree(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
-  const s = scale;
-  ctx.fillStyle = "rgba(30,50,80,0.18)";
+  const sc = scale;
+  // Soft ground shadow
+  ctx.fillStyle = `rgba(20,40,70,${0.22 * sc})`;
   ctx.beginPath();
-  ctx.ellipse(x, y + 4 * s, 14 * s, 4 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y + 4 * sc, 16 * sc, 4 * sc, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#5a3a20";
-  ctx.fillRect(x - 2 * s, y - 4 * s, 4 * s, 10 * s);
+  // Trunk with gradient
+  const trunkG = ctx.createLinearGradient(x - 3 * sc, y, x + 3 * sc, y);
+  trunkG.addColorStop(0, "#3a2410");
+  trunkG.addColorStop(0.5, "#6a4520");
+  trunkG.addColorStop(1, "#3a2410");
+  ctx.fillStyle = trunkG;
+  ctx.fillRect(x - 2 * sc, y - 4 * sc, 4 * sc, 10 * sc);
+  // Foliage layers — darker base, lighter apex
   const layers = [
-    { w: 20, h: 22, off: 10, c: "#1e5a35" },
-    { w: 15, h: 18, off: 20, c: "#246b3f" },
-    { w: 10, h: 14, off: 28, c: "#2a7c4a" },
+    { w: 20, h: 22, off: 10, c: "#163d24", hi: "#2a6b3a" },
+    { w: 15, h: 18, off: 20, c: "#1d5230", hi: "#347a44" },
+    { w: 10, h: 14, off: 28, c: "#246d3f", hi: "#4a9558" },
   ];
   for (const L of layers) {
     ctx.fillStyle = L.c;
     ctx.beginPath();
-    ctx.moveTo(x - L.w * s, y - L.off * s + 4 * s);
-    ctx.lineTo(x + L.w * s, y - L.off * s + 4 * s);
-    ctx.lineTo(x, y - (L.off + L.h) * s);
+    ctx.moveTo(x - L.w * sc, y - L.off * sc + 4 * sc);
+    ctx.quadraticCurveTo(x - L.w * 0.7 * sc, y - (L.off + L.h * 0.4) * sc, x, y - (L.off + L.h) * sc);
+    ctx.quadraticCurveTo(x + L.w * 0.7 * sc, y - (L.off + L.h * 0.4) * sc, x + L.w * sc, y - L.off * sc + 4 * sc);
+    ctx.closePath();
+    ctx.fill();
+    // Left-side highlight (sun from upper-left)
+    ctx.fillStyle = L.hi;
+    ctx.beginPath();
+    ctx.moveTo(x - L.w * sc, y - L.off * sc + 4 * sc);
+    ctx.quadraticCurveTo(x - L.w * 0.7 * sc, y - (L.off + L.h * 0.4) * sc, x, y - (L.off + L.h) * sc);
+    ctx.lineTo(x - L.w * 0.15 * sc, y - (L.off + L.h * 0.5) * sc);
+    ctx.lineTo(x - L.w * 0.55 * sc, y - L.off * sc + 4 * sc);
+    ctx.closePath();
+    ctx.fill();
+    // Snow cap
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.beginPath();
+    ctx.moveTo(x - L.w * 0.5 * sc, y - (L.off + L.h * 0.55) * sc);
+    ctx.quadraticCurveTo(x, y - (L.off + L.h + 1) * sc, x + L.w * 0.5 * sc, y - (L.off + L.h * 0.55) * sc);
+    ctx.quadraticCurveTo(x, y - (L.off + L.h * 0.7) * sc, x - L.w * 0.5 * sc, y - (L.off + L.h * 0.55) * sc);
     ctx.closePath();
     ctx.fill();
   }
@@ -1616,11 +1785,21 @@ function drawSlope(
   const botY = wy(s.sy - 300);
 
   const slopeGrad = ctx.createLinearGradient(0, topY, 0, botY);
-  slopeGrad.addColorStop(0, "#e8f1f9");
-  slopeGrad.addColorStop(0.5, "#fafdff");
+  slopeGrad.addColorStop(0, "#dde8f3");
+  slopeGrad.addColorStop(0.35, "#eef4fa");
+  slopeGrad.addColorStop(0.7, "#fafdff");
   slopeGrad.addColorStop(1, "#ffffff");
   ctx.fillStyle = slopeGrad;
   ctx.fillRect(leftEdge, topY, rightEdge - leftEdge, botY - topY);
+
+  // Subtle sun-warmed strip down the center for depth
+  const centerX = wx(0);
+  const sunStrip = ctx.createLinearGradient(centerX - 80, 0, centerX + 80, 0);
+  sunStrip.addColorStop(0, "rgba(255,240,210,0)");
+  sunStrip.addColorStop(0.5, "rgba(255,245,220,0.35)");
+  sunStrip.addColorStop(1, "rgba(255,240,210,0)");
+  ctx.fillStyle = sunStrip;
+  ctx.fillRect(centerX - 80, topY, 160, botY - topY);
 
   ctx.strokeStyle = "rgba(80,110,150,0.35)";
   ctx.lineWidth = 3;
@@ -1720,33 +1899,65 @@ function drawObstacle(
 
   switch (o.kind) {
     case "tree": {
-      ctx.fillStyle = "#5a3a20";
-      ctx.fillRect(x - 3, y - 4, 6, 12);
+      // Trunk with bark gradient
+      const trunkG = ctx.createLinearGradient(x - 4, y, x + 4, y);
+      trunkG.addColorStop(0, "#2e1a08");
+      trunkG.addColorStop(0.5, "#6a4520");
+      trunkG.addColorStop(1, "#2e1a08");
+      ctx.fillStyle = trunkG;
+      ctx.fillRect(x - 3, y - 4, 6, 14);
+      // Foliage layers — rounded silhouette with side highlight + snow cap
       const layers = [
-        { w: 28, h: 30, off: 14, c: "#1e5a35" },
-        { w: 22, h: 26, off: 22, c: "#246b3f" },
-        { w: 16, h: 22, off: 30, c: "#2a7c4a" },
+        { w: 28, h: 32, off: 14, c: "#0f3a1e", hi: "#246b3a", sh: "#08240e" },
+        { w: 22, h: 28, off: 24, c: "#15522c", hi: "#2f8043", sh: "#0d3019" },
+        { w: 16, h: 22, off: 34, c: "#1e6b38", hi: "#43a05a", sh: "#114224" },
       ];
       for (const L of layers) {
+        // Base silhouette (rounded triangle)
         ctx.fillStyle = L.c;
         ctx.beginPath();
         ctx.moveTo(x - L.w, y - L.off + 6);
-        ctx.lineTo(x + L.w, y - L.off + 6);
-        ctx.lineTo(x, y - L.off - L.h);
+        ctx.quadraticCurveTo(x - L.w * 0.6, y - L.off - L.h * 0.4, x, y - L.off - L.h);
+        ctx.quadraticCurveTo(x + L.w * 0.6, y - L.off - L.h * 0.4, x + L.w, y - L.off + 6);
+        ctx.quadraticCurveTo(x, y - L.off + 2, x - L.w, y - L.off + 6);
         ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.55)";
+        // Right-side shadow
+        ctx.fillStyle = L.sh;
         ctx.beginPath();
-        ctx.moveTo(x - L.w * 0.7, y - L.off + 4);
-        ctx.lineTo(x - L.w * 0.3, y - L.off - L.h * 0.5);
-        ctx.lineTo(x - L.w * 0.1, y - L.off - L.h * 0.4);
-        ctx.lineTo(x + L.w * 0.1, y - L.off + 2);
+        ctx.moveTo(x, y - L.off - L.h);
+        ctx.quadraticCurveTo(x + L.w * 0.6, y - L.off - L.h * 0.4, x + L.w, y - L.off + 6);
+        ctx.quadraticCurveTo(x + L.w * 0.3, y - L.off, x + L.w * 0.1, y - L.off - L.h * 0.5);
+        ctx.closePath();
+        ctx.fill();
+        // Left-side highlight (sun upper-left)
+        ctx.fillStyle = L.hi;
+        ctx.beginPath();
+        ctx.moveTo(x - L.w * 0.85, y - L.off + 4);
+        ctx.quadraticCurveTo(x - L.w * 0.5, y - L.off - L.h * 0.45, x - L.w * 0.05, y - L.off - L.h * 0.85);
+        ctx.lineTo(x - L.w * 0.25, y - L.off - L.h * 0.4);
+        ctx.lineTo(x - L.w * 0.55, y - L.off);
+        ctx.closePath();
+        ctx.fill();
+        // Snow on top of each layer
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.beginPath();
+        ctx.moveTo(x - L.w * 0.55, y - L.off - L.h * 0.45);
+        ctx.quadraticCurveTo(x - L.w * 0.3, y - L.off - L.h - 2, x, y - L.off - L.h);
+        ctx.quadraticCurveTo(x + L.w * 0.3, y - L.off - L.h - 2, x + L.w * 0.55, y - L.off - L.h * 0.45);
+        ctx.quadraticCurveTo(x + L.w * 0.25, y - L.off - L.h * 0.55, x, y - L.off - L.h * 0.5);
+        ctx.quadraticCurveTo(x - L.w * 0.25, y - L.off - L.h * 0.55, x - L.w * 0.55, y - L.off - L.h * 0.45);
         ctx.closePath();
         ctx.fill();
       }
+      // Tip snowball
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
-      ctx.arc(x, y - 52, 4, 0, Math.PI * 2);
+      ctx.arc(x, y - 56, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(180,210,235,0.7)";
+      ctx.beginPath();
+      ctx.arc(x + 1.5, y - 55, 2, 0, Math.PI * 2);
       ctx.fill();
       break;
     }
@@ -2064,9 +2275,15 @@ function drawSkier(
     ctx.save();
     ctx.translate(side * 6, 6);
     ctx.rotate(skiAngle);
-    ctx.fillStyle = "#dc2626";
+    // Ski body — gradient
+    const skiG = ctx.createLinearGradient(-3, 0, 3, 0);
+    skiG.addColorStop(0, "#7f1d1d");
+    skiG.addColorStop(0.5, "#dc2626");
+    skiG.addColorStop(1, "#7f1d1d");
+    ctx.fillStyle = skiG;
     ctx.fillRect(-3, -22, 6, 32);
-    ctx.fillStyle = "#b91c1c";
+    // Ski tip
+    ctx.fillStyle = "#fbbf24";
     ctx.beginPath();
     ctx.moveTo(-3, -22);
     ctx.lineTo(3, -22);
@@ -2074,53 +2291,138 @@ function drawSkier(
     ctx.lineTo(-2, -26);
     ctx.closePath();
     ctx.fill();
+    // Binding
     ctx.fillStyle = "#0f172a";
     ctx.fillRect(-3, -6, 6, 4);
+    // White stripe down center
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.fillRect(-0.5, -22, 1, 32);
     ctx.restore();
   }
 
-  ctx.fillStyle = "#1e293b";
-  ctx.fillRect(-8, -8 + crouch * 0.5, 6, 14);
-  ctx.fillRect(2, -8 + crouch * 0.5, 6, 14);
-
-  ctx.fillStyle = "#ea580c";
-  roundRect(ctx, -11, -22 + crouch, 22, 18, 4);
+  // Pants — dark navy with a subtle highlight strip
+  const pantsG = ctx.createLinearGradient(-8, 0, 8, 0);
+  pantsG.addColorStop(0, "#0f172a");
+  pantsG.addColorStop(0.5, "#1e293b");
+  pantsG.addColorStop(1, "#0f172a");
+  ctx.fillStyle = pantsG;
+  roundRect(ctx, -8, -8 + crouch * 0.5, 6, 14, 1.5);
   ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.18)";
-  roundRect(ctx, -10, -21 + crouch, 8, 14, 3);
-  ctx.fill();
-
-  ctx.fillStyle = "#ea580c";
-  ctx.save();
-  ctx.translate(-10, -18 + crouch);
-  ctx.rotate(-0.4 + lean * 0.3);
-  ctx.fillRect(-3, 0, 6, 12);
-  ctx.restore();
-  ctx.save();
-  ctx.translate(10, -18 + crouch);
-  ctx.rotate(0.4 + lean * 0.3);
-  ctx.fillRect(-3, 0, 6, 12);
-  ctx.restore();
-
-  ctx.fillStyle = "#1f2937";
-  ctx.beginPath();
-  ctx.arc(-14 + lean * 3, -8 + crouch, 3, 0, Math.PI * 2);
-  ctx.arc(14 + lean * 3, -8 + crouch, 3, 0, Math.PI * 2);
+  roundRect(ctx, 2, -8 + crouch * 0.5, 6, 14, 1.5);
   ctx.fill();
 
-  ctx.fillStyle = "#0f172a";
-  ctx.beginPath();
-  ctx.arc(0, -28 + crouch, 7, 0, Math.PI * 2);
+  // Jacket — orange with gradient + chest stripe + reflective accents
+  const jacketG = ctx.createLinearGradient(0, -22 + crouch, 0, -4 + crouch);
+  jacketG.addColorStop(0, "#fb923c");
+  jacketG.addColorStop(0.55, "#ea580c");
+  jacketG.addColorStop(1, "#9a3412");
+  ctx.fillStyle = jacketG;
+  roundRect(ctx, -11, -22 + crouch, 22, 18, 5);
   ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.25)";
-  ctx.beginPath();
-  ctx.arc(-2, -30 + crouch, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#38bdf8";
-  roundRect(ctx, -5, -28 + crouch, 10, 3, 1.5);
-  ctx.fill();
+  // White chest stripe
   ctx.fillStyle = "#ffffff";
+  ctx.fillRect(-11, -14 + crouch, 22, 2);
+  // Left highlight panel
+  ctx.fillStyle = "rgba(255,255,255,0.22)";
+  roundRect(ctx, -10, -21 + crouch, 7, 14, 3);
+  ctx.fill();
+  // Zipper
+  ctx.strokeStyle = "rgba(255,255,255,0.45)";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(0, -20 + crouch);
+  ctx.lineTo(0, -6 + crouch);
+  ctx.stroke();
+
+  // Arms with gradient + glove
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.translate(side * 10, -18 + crouch);
+    ctx.rotate(side * 0.4 + lean * 0.3);
+    const armG = ctx.createLinearGradient(-3, 0, 3, 0);
+    armG.addColorStop(0, "#9a3412");
+    armG.addColorStop(0.5, "#ea580c");
+    armG.addColorStop(1, "#9a3412");
+    ctx.fillStyle = armG;
+    roundRect(ctx, -3, 0, 6, 12, 2);
+    ctx.fill();
+    // Glove
+    ctx.fillStyle = "#1f2937";
+    ctx.beginPath();
+    ctx.arc(0, 13, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Pole
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, 13);
+    ctx.lineTo(side * 4, 26);
+    ctx.stroke();
+    // Pole basket
+    ctx.fillStyle = "rgba(148,163,184,0.6)";
+    ctx.beginPath();
+    ctx.arc(side * 4, 26, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Helmet — dark with light panel + chinstrap shadow
+  const helmG = ctx.createRadialGradient(-2, -32 + crouch, 1, 0, -28 + crouch, 8);
+  helmG.addColorStop(0, "#334155");
+  helmG.addColorStop(1, "#0f172a");
+  ctx.fillStyle = helmG;
+  ctx.beginPath();
+  ctx.arc(0, -28 + crouch, 7.5, 0, Math.PI * 2);
+  ctx.fill();
+  // Helmet highlight
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(-2.5, -31 + crouch, 3, 1.8, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  // Skin tone face under goggles
+  ctx.fillStyle = "#f5d0a5";
+  ctx.beginPath();
+  ctx.arc(0, -25 + crouch, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+  // Goggles strap
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(-7, -29 + crouch, 14, 2.5);
+  // Goggle lens with reflection
+  const gogG = ctx.createLinearGradient(-5, -28.5 + crouch, 5, -25 + crouch);
+  gogG.addColorStop(0, "#0ea5e9");
+  gogG.addColorStop(0.5, "#38bdf8");
+  gogG.addColorStop(1, "#7dd3fc");
+  ctx.fillStyle = gogG;
+  roundRect(ctx, -5, -28 + crouch, 10, 3.5, 1.5);
+  ctx.fill();
+  // Goggle reflection highlight
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
   ctx.fillRect(-4, -27.5 + crouch, 2, 1);
+  ctx.fillRect(1, -27 + crouch, 1.5, 0.7);
+  // Subtle chinstrap
+  ctx.strokeStyle = "rgba(0,0,0,0.4)";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-6, -23 + crouch);
+  ctx.quadraticCurveTo(0, -20 + crouch, 6, -23 + crouch);
+  ctx.stroke();
+  // Scarf trailing in wind (more visible at speed)
+  if (Math.abs(s.svx) > 50 || s.speed > BASE_SPEED + 30) {
+    const scarfDir = -Math.sign(s.svx) || 1;
+    ctx.fillStyle = "#dc2626";
+    ctx.beginPath();
+    ctx.moveTo(-2, -22 + crouch);
+    ctx.quadraticCurveTo(scarfDir * 6, -20 + crouch, scarfDir * 12, -16 + crouch);
+    ctx.lineTo(scarfDir * 12, -13 + crouch);
+    ctx.quadraticCurveTo(scarfDir * 6, -17 + crouch, -2, -19 + crouch);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.beginPath();
+    ctx.moveTo(-1, -22 + crouch);
+    ctx.quadraticCurveTo(scarfDir * 6, -20 + crouch, scarfDir * 11, -17 + crouch);
+    ctx.stroke();
+  }
 
   // Active shield bubble around player
   if (s.activeShield > 0) {
@@ -2250,31 +2552,76 @@ function drawParticles(
     const x = wx(p.x);
     const y = wy(p.y);
     if (p.kind === "flake") {
-      ctx.fillStyle = `rgba(255,255,255,0.75)`;
-      ctx.beginPath();
-      ctx.arc(x, y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+      // Larger flakes get a 6-pointed star shape with soft glow
+      if (p.size > 2) {
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "rgba(255,255,255,0.45)";
+        ctx.beginPath();
+        ctx.arc(x, y, p.size + 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.95)";
+        ctx.lineWidth = 1;
+        ctx.lineCap = "round";
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI;
+          ctx.beginPath();
+          ctx.moveTo(x - Math.cos(a) * p.size * 1.6, y - Math.sin(a) * p.size * 1.6);
+          ctx.lineTo(x + Math.cos(a) * p.size * 1.6, y + Math.sin(a) * p.size * 1.6);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else {
+        ctx.fillStyle = `rgba(255,255,255,0.8)`;
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
     } else if (p.kind === "snow") {
       const a = clamp(p.life / p.maxLife, 0, 1);
-      ctx.fillStyle = `rgba(255,255,255,${a * 0.9})`;
+      // Soft glowing snow puff
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, p.size * 2.2);
+      grd.addColorStop(0, `rgba(255,255,255,${a})`);
+      grd.addColorStop(0.5, `rgba(245,250,255,${a * 0.6})`);
+      grd.addColorStop(1, `rgba(220,235,250,0)`);
+      ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(x, y, p.size * a, 0, Math.PI * 2);
+      ctx.arc(x, y, p.size * 2.2, 0, Math.PI * 2);
       ctx.fill();
     } else if (p.kind === "spark") {
       const a = clamp(p.life / p.maxLife, 0, 1);
-      ctx.fillStyle = `rgba(255,255,255,${a})`;
-      ctx.fillRect(x - 1.5, y - 1.5, 3, 3);
+      // Streaking spark with motion blur
+      ctx.save();
+      ctx.globalAlpha = a;
+      const ang = Math.atan2(p.vy, p.vx);
+      ctx.translate(x, y);
+      ctx.rotate(ang);
+      const trailG = ctx.createLinearGradient(-8, 0, 4, 0);
+      trailG.addColorStop(0, "rgba(255,255,255,0)");
+      trailG.addColorStop(1, "rgba(255,255,255,1)");
+      ctx.fillStyle = trailG;
+      ctx.fillRect(-8, -1, 12, 2);
+      ctx.restore();
     } else if (p.kind === "coin") {
       const a = clamp(p.life / p.maxLife, 0, 1);
-      ctx.fillStyle = `rgba(251,191,36,${a})`;
+      // Glowing gold sparkle
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, p.size * 2.5);
+      grd.addColorStop(0, `rgba(255,235,150,${a})`);
+      grd.addColorStop(0.4, `rgba(251,191,36,${a * 0.9})`);
+      grd.addColorStop(1, `rgba(251,191,36,0)`);
+      ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      ctx.arc(x, y, p.size * 2.5, 0, Math.PI * 2);
       ctx.fill();
     } else if (p.kind === "shield") {
       const a = clamp(p.life / p.maxLife, 0, 1);
-      ctx.fillStyle = `rgba(56,189,248,${a})`;
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, p.size * 2.5);
+      grd.addColorStop(0, `rgba(186,230,253,${a})`);
+      grd.addColorStop(0.5, `rgba(56,189,248,${a * 0.8})`);
+      grd.addColorStop(1, `rgba(56,189,248,0)`);
+      ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(x, y, p.size * a, 0, Math.PI * 2);
+      ctx.arc(x, y, p.size * 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
   }
