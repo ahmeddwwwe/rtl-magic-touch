@@ -1698,24 +1698,48 @@ function drawForestSides(
 }
 
 function drawMiniTree(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
-  const s = scale;
-  ctx.fillStyle = "rgba(30,50,80,0.18)";
+  const sc = scale;
+  // Soft ground shadow
+  ctx.fillStyle = `rgba(20,40,70,${0.22 * sc})`;
   ctx.beginPath();
-  ctx.ellipse(x, y + 4 * s, 14 * s, 4 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y + 4 * sc, 16 * sc, 4 * sc, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#5a3a20";
-  ctx.fillRect(x - 2 * s, y - 4 * s, 4 * s, 10 * s);
+  // Trunk with gradient
+  const trunkG = ctx.createLinearGradient(x - 3 * sc, y, x + 3 * sc, y);
+  trunkG.addColorStop(0, "#3a2410");
+  trunkG.addColorStop(0.5, "#6a4520");
+  trunkG.addColorStop(1, "#3a2410");
+  ctx.fillStyle = trunkG;
+  ctx.fillRect(x - 2 * sc, y - 4 * sc, 4 * sc, 10 * sc);
+  // Foliage layers — darker base, lighter apex
   const layers = [
-    { w: 20, h: 22, off: 10, c: "#1e5a35" },
-    { w: 15, h: 18, off: 20, c: "#246b3f" },
-    { w: 10, h: 14, off: 28, c: "#2a7c4a" },
+    { w: 20, h: 22, off: 10, c: "#163d24", hi: "#2a6b3a" },
+    { w: 15, h: 18, off: 20, c: "#1d5230", hi: "#347a44" },
+    { w: 10, h: 14, off: 28, c: "#246d3f", hi: "#4a9558" },
   ];
   for (const L of layers) {
     ctx.fillStyle = L.c;
     ctx.beginPath();
-    ctx.moveTo(x - L.w * s, y - L.off * s + 4 * s);
-    ctx.lineTo(x + L.w * s, y - L.off * s + 4 * s);
-    ctx.lineTo(x, y - (L.off + L.h) * s);
+    ctx.moveTo(x - L.w * sc, y - L.off * sc + 4 * sc);
+    ctx.quadraticCurveTo(x - L.w * 0.7 * sc, y - (L.off + L.h * 0.4) * sc, x, y - (L.off + L.h) * sc);
+    ctx.quadraticCurveTo(x + L.w * 0.7 * sc, y - (L.off + L.h * 0.4) * sc, x + L.w * sc, y - L.off * sc + 4 * sc);
+    ctx.closePath();
+    ctx.fill();
+    // Left-side highlight (sun from upper-left)
+    ctx.fillStyle = L.hi;
+    ctx.beginPath();
+    ctx.moveTo(x - L.w * sc, y - L.off * sc + 4 * sc);
+    ctx.quadraticCurveTo(x - L.w * 0.7 * sc, y - (L.off + L.h * 0.4) * sc, x, y - (L.off + L.h) * sc);
+    ctx.lineTo(x - L.w * 0.15 * sc, y - (L.off + L.h * 0.5) * sc);
+    ctx.lineTo(x - L.w * 0.55 * sc, y - L.off * sc + 4 * sc);
+    ctx.closePath();
+    ctx.fill();
+    // Snow cap
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.beginPath();
+    ctx.moveTo(x - L.w * 0.5 * sc, y - (L.off + L.h * 0.55) * sc);
+    ctx.quadraticCurveTo(x, y - (L.off + L.h + 1) * sc, x + L.w * 0.5 * sc, y - (L.off + L.h * 0.55) * sc);
+    ctx.quadraticCurveTo(x, y - (L.off + L.h * 0.7) * sc, x - L.w * 0.5 * sc, y - (L.off + L.h * 0.55) * sc);
     ctx.closePath();
     ctx.fill();
   }
@@ -1735,11 +1759,21 @@ function drawSlope(
   const botY = wy(s.sy - 300);
 
   const slopeGrad = ctx.createLinearGradient(0, topY, 0, botY);
-  slopeGrad.addColorStop(0, "#e8f1f9");
-  slopeGrad.addColorStop(0.5, "#fafdff");
+  slopeGrad.addColorStop(0, "#dde8f3");
+  slopeGrad.addColorStop(0.35, "#eef4fa");
+  slopeGrad.addColorStop(0.7, "#fafdff");
   slopeGrad.addColorStop(1, "#ffffff");
   ctx.fillStyle = slopeGrad;
   ctx.fillRect(leftEdge, topY, rightEdge - leftEdge, botY - topY);
+
+  // Subtle sun-warmed strip down the center for depth
+  const centerX = wx(0);
+  const sunStrip = ctx.createLinearGradient(centerX - 80, 0, centerX + 80, 0);
+  sunStrip.addColorStop(0, "rgba(255,240,210,0)");
+  sunStrip.addColorStop(0.5, "rgba(255,245,220,0.35)");
+  sunStrip.addColorStop(1, "rgba(255,240,210,0)");
+  ctx.fillStyle = sunStrip;
+  ctx.fillRect(centerX - 80, topY, 160, botY - topY);
 
   ctx.strokeStyle = "rgba(80,110,150,0.35)";
   ctx.lineWidth = 3;
