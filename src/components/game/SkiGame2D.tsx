@@ -833,6 +833,16 @@ export const SkiGame2D = () => {
       drawSkyline(ctx, w, horizonY, camY * 0.08, "#b8c8dc", 0.35, 1);
       drawSkyline(ctx, w, horizonY, camY * 0.16, "#d4dde7", 0.22, 2);
 
+      // Drifting volumetric clouds (skip in heavy fog)
+      if (level.fog < 0.4) drawClouds(ctx, w, horizonY, s.t, level.fog);
+
+      // Atmospheric haze where sky meets ground
+      const haze = ctx.createLinearGradient(0, horizonY - 40, 0, horizonY + 30);
+      haze.addColorStop(0, "rgba(255,255,255,0)");
+      haze.addColorStop(1, "rgba(255,255,255,0.45)");
+      ctx.fillStyle = haze;
+      ctx.fillRect(0, horizonY - 40, w, 70);
+
       // Ground
       const ground = ctx.createLinearGradient(0, horizonY, 0, h);
       ground.addColorStop(0, level.groundTint);
