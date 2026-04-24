@@ -2249,9 +2249,15 @@ function drawSkier(
     ctx.save();
     ctx.translate(side * 6, 6);
     ctx.rotate(skiAngle);
-    ctx.fillStyle = "#dc2626";
+    // Ski body — gradient
+    const skiG = ctx.createLinearGradient(-3, 0, 3, 0);
+    skiG.addColorStop(0, "#7f1d1d");
+    skiG.addColorStop(0.5, "#dc2626");
+    skiG.addColorStop(1, "#7f1d1d");
+    ctx.fillStyle = skiG;
     ctx.fillRect(-3, -22, 6, 32);
-    ctx.fillStyle = "#b91c1c";
+    // Ski tip
+    ctx.fillStyle = "#fbbf24";
     ctx.beginPath();
     ctx.moveTo(-3, -22);
     ctx.lineTo(3, -22);
@@ -2259,53 +2265,138 @@ function drawSkier(
     ctx.lineTo(-2, -26);
     ctx.closePath();
     ctx.fill();
+    // Binding
     ctx.fillStyle = "#0f172a";
     ctx.fillRect(-3, -6, 6, 4);
+    // White stripe down center
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.fillRect(-0.5, -22, 1, 32);
     ctx.restore();
   }
 
-  ctx.fillStyle = "#1e293b";
-  ctx.fillRect(-8, -8 + crouch * 0.5, 6, 14);
-  ctx.fillRect(2, -8 + crouch * 0.5, 6, 14);
-
-  ctx.fillStyle = "#ea580c";
-  roundRect(ctx, -11, -22 + crouch, 22, 18, 4);
+  // Pants — dark navy with a subtle highlight strip
+  const pantsG = ctx.createLinearGradient(-8, 0, 8, 0);
+  pantsG.addColorStop(0, "#0f172a");
+  pantsG.addColorStop(0.5, "#1e293b");
+  pantsG.addColorStop(1, "#0f172a");
+  ctx.fillStyle = pantsG;
+  roundRect(ctx, -8, -8 + crouch * 0.5, 6, 14, 1.5);
   ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.18)";
-  roundRect(ctx, -10, -21 + crouch, 8, 14, 3);
-  ctx.fill();
-
-  ctx.fillStyle = "#ea580c";
-  ctx.save();
-  ctx.translate(-10, -18 + crouch);
-  ctx.rotate(-0.4 + lean * 0.3);
-  ctx.fillRect(-3, 0, 6, 12);
-  ctx.restore();
-  ctx.save();
-  ctx.translate(10, -18 + crouch);
-  ctx.rotate(0.4 + lean * 0.3);
-  ctx.fillRect(-3, 0, 6, 12);
-  ctx.restore();
-
-  ctx.fillStyle = "#1f2937";
-  ctx.beginPath();
-  ctx.arc(-14 + lean * 3, -8 + crouch, 3, 0, Math.PI * 2);
-  ctx.arc(14 + lean * 3, -8 + crouch, 3, 0, Math.PI * 2);
+  roundRect(ctx, 2, -8 + crouch * 0.5, 6, 14, 1.5);
   ctx.fill();
 
-  ctx.fillStyle = "#0f172a";
-  ctx.beginPath();
-  ctx.arc(0, -28 + crouch, 7, 0, Math.PI * 2);
+  // Jacket — orange with gradient + chest stripe + reflective accents
+  const jacketG = ctx.createLinearGradient(0, -22 + crouch, 0, -4 + crouch);
+  jacketG.addColorStop(0, "#fb923c");
+  jacketG.addColorStop(0.55, "#ea580c");
+  jacketG.addColorStop(1, "#9a3412");
+  ctx.fillStyle = jacketG;
+  roundRect(ctx, -11, -22 + crouch, 22, 18, 5);
   ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.25)";
-  ctx.beginPath();
-  ctx.arc(-2, -30 + crouch, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#38bdf8";
-  roundRect(ctx, -5, -28 + crouch, 10, 3, 1.5);
-  ctx.fill();
+  // White chest stripe
   ctx.fillStyle = "#ffffff";
+  ctx.fillRect(-11, -14 + crouch, 22, 2);
+  // Left highlight panel
+  ctx.fillStyle = "rgba(255,255,255,0.22)";
+  roundRect(ctx, -10, -21 + crouch, 7, 14, 3);
+  ctx.fill();
+  // Zipper
+  ctx.strokeStyle = "rgba(255,255,255,0.45)";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(0, -20 + crouch);
+  ctx.lineTo(0, -6 + crouch);
+  ctx.stroke();
+
+  // Arms with gradient + glove
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.translate(side * 10, -18 + crouch);
+    ctx.rotate(side * 0.4 + lean * 0.3);
+    const armG = ctx.createLinearGradient(-3, 0, 3, 0);
+    armG.addColorStop(0, "#9a3412");
+    armG.addColorStop(0.5, "#ea580c");
+    armG.addColorStop(1, "#9a3412");
+    ctx.fillStyle = armG;
+    roundRect(ctx, -3, 0, 6, 12, 2);
+    ctx.fill();
+    // Glove
+    ctx.fillStyle = "#1f2937";
+    ctx.beginPath();
+    ctx.arc(0, 13, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Pole
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, 13);
+    ctx.lineTo(side * 4, 26);
+    ctx.stroke();
+    // Pole basket
+    ctx.fillStyle = "rgba(148,163,184,0.6)";
+    ctx.beginPath();
+    ctx.arc(side * 4, 26, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Helmet — dark with light panel + chinstrap shadow
+  const helmG = ctx.createRadialGradient(-2, -32 + crouch, 1, 0, -28 + crouch, 8);
+  helmG.addColorStop(0, "#334155");
+  helmG.addColorStop(1, "#0f172a");
+  ctx.fillStyle = helmG;
+  ctx.beginPath();
+  ctx.arc(0, -28 + crouch, 7.5, 0, Math.PI * 2);
+  ctx.fill();
+  // Helmet highlight
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(-2.5, -31 + crouch, 3, 1.8, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  // Skin tone face under goggles
+  ctx.fillStyle = "#f5d0a5";
+  ctx.beginPath();
+  ctx.arc(0, -25 + crouch, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+  // Goggles strap
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(-7, -29 + crouch, 14, 2.5);
+  // Goggle lens with reflection
+  const gogG = ctx.createLinearGradient(-5, -28.5 + crouch, 5, -25 + crouch);
+  gogG.addColorStop(0, "#0ea5e9");
+  gogG.addColorStop(0.5, "#38bdf8");
+  gogG.addColorStop(1, "#7dd3fc");
+  ctx.fillStyle = gogG;
+  roundRect(ctx, -5, -28 + crouch, 10, 3.5, 1.5);
+  ctx.fill();
+  // Goggle reflection highlight
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
   ctx.fillRect(-4, -27.5 + crouch, 2, 1);
+  ctx.fillRect(1, -27 + crouch, 1.5, 0.7);
+  // Subtle chinstrap
+  ctx.strokeStyle = "rgba(0,0,0,0.4)";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-6, -23 + crouch);
+  ctx.quadraticCurveTo(0, -20 + crouch, 6, -23 + crouch);
+  ctx.stroke();
+  // Scarf trailing in wind (more visible at speed)
+  if (Math.abs(s.svx) > 50 || s.speed > BASE_SPEED + 30) {
+    const scarfDir = -Math.sign(s.svx) || 1;
+    ctx.fillStyle = "#dc2626";
+    ctx.beginPath();
+    ctx.moveTo(-2, -22 + crouch);
+    ctx.quadraticCurveTo(scarfDir * 6, -20 + crouch, scarfDir * 12, -16 + crouch);
+    ctx.lineTo(scarfDir * 12, -13 + crouch);
+    ctx.quadraticCurveTo(scarfDir * 6, -17 + crouch, -2, -19 + crouch);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.beginPath();
+    ctx.moveTo(-1, -22 + crouch);
+    ctx.quadraticCurveTo(scarfDir * 6, -20 + crouch, scarfDir * 11, -17 + crouch);
+    ctx.stroke();
+  }
 
   // Active shield bubble around player
   if (s.activeShield > 0) {
