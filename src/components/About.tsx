@@ -1,5 +1,5 @@
 import resortImg from "@/assets/saint-catherine-resort.webp";
-import lobbyImg from "@/assets/locker-room.webp";
+import lobbyImg from "@/assets/gallery-lounge.webp";
 import equipmentImg from "@/assets/equipment-lounge.webp";
 import { useT } from "@/i18n/LanguageProvider";
 
