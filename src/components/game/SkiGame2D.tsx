@@ -1564,39 +1564,108 @@ function drawSkyline(
   layer: number,
 ) {
   const amp = horizonY * heightRatio;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(0, horizonY);
   const peaks = 6 + layer * 2;
   const phase = -camOffset * 0.01 + layer * 1.3;
+
+  // Pre-compute peak y values once
+  const ys: number[] = [];
   for (let i = 0; i <= peaks; i++) {
-    const x = (i / peaks) * w;
     const n = Math.sin(phase + i * 1.7) * 0.5 + Math.sin(phase + i * 0.8 + layer) * 0.5;
-    const y = horizonY - (n * amp * 0.5 + amp * 0.45);
-    if (i === 0) ctx.lineTo(x, y);
-    else {
-      const px = ((i - 0.5) / peaks) * w;
-      const pn = Math.sin(phase + (i - 0.5) * 1.7) * 0.5 + Math.sin(phase + (i - 0.5) * 0.8 + layer) * 0.5;
-      const py = horizonY - (pn * amp * 0.5 + amp * 0.45);
-      ctx.quadraticCurveTo(px, py - 6, x, y);
-    }
+    ys[i] = horizonY - (n * amp * 0.5 + amp * 0.45);
+  }
+
+  // Vertical gradient on the mountain body for depth (lighter at top, darker at base)
+  const topY = Math.min(...ys);
+  const grd = ctx.createLinearGradient(0, topY, 0, horizonY);
+  // Lighten the base color at top, darken at bottom
+  grd.addColorStop(0, lighten(color, 0.18));
+  grd.addColorStop(0.55, color);
+  grd.addColorStop(1, darken(color, 0.18));
+  ctx.fillStyle = grd;
+
+  ctx.beginPath();
+  ctx.moveTo(0, horizonY);
+  ctx.lineTo(0, ys[0]);
+  for (let i = 1; i <= peaks; i++) {
+    const x = (i / peaks) * w;
+    const px = ((i - 0.5) / peaks) * w;
+    const py = (ys[i - 1] + ys[i]) * 0.5 - 6;
+    ctx.quadraticCurveTo(px, py, x, ys[i]);
   }
   ctx.lineTo(w, horizonY);
   ctx.closePath();
   ctx.fill();
-  if (layer === 2) {
-    ctx.fillStyle = "rgba(255,255,255,0.7)";
+
+  // Shaded faces — subtle dark ridge on the right side of every peak
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = darken(color, 0.55);
+  for (let i = 0; i <= peaks; i++) {
+    const x = (i / peaks) * w;
+    const y = ys[i];
+    const next = ys[Math.min(peaks, i + 1)];
+    const baseY = horizonY;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + (w / peaks) * 0.48, (y + next) * 0.5 + 2);
+    ctx.lineTo(x + (w / peaks) * 0.45, baseY);
+    ctx.lineTo(x, baseY);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Snow caps — generous on far layer, subtle on closer layers
+  if (layer >= 1) {
+    const capAlpha = layer === 2 ? 0.92 : 0.55;
+    ctx.fillStyle = `rgba(255,255,255,${capAlpha})`;
     for (let i = 0; i <= peaks; i++) {
       const x = (i / peaks) * w;
-      const n = Math.sin(phase + i * 1.7) * 0.5 + Math.sin(phase + i * 0.8 + layer) * 0.5;
-      const y = horizonY - (n * amp * 0.5 + amp * 0.45);
+      const y = ys[i];
+      const capW = layer === 2 ? 22 : 16;
       ctx.beginPath();
-      ctx.moveTo(x - 14, y + 10);
-      ctx.quadraticCurveTo(x, y - 2, x + 14, y + 10);
-      ctx.quadraticCurveTo(x, y + 6, x - 14, y + 10);
+      ctx.moveTo(x - capW, y + 12);
+      ctx.quadraticCurveTo(x - capW * 0.5, y - 4, x, y - 1);
+      ctx.quadraticCurveTo(x + capW * 0.5, y - 5, x + capW, y + 12);
+      ctx.quadraticCurveTo(x + capW * 0.4, y + 6, x, y + 8);
+      ctx.quadraticCurveTo(x - capW * 0.4, y + 6, x - capW, y + 12);
+      ctx.closePath();
       ctx.fill();
+      // Highlight ridge
+      if (layer === 2) {
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(x - capW * 0.6, y + 4);
+        ctx.quadraticCurveTo(x - 2, y - 3, x + capW * 0.4, y + 1);
+        ctx.quadraticCurveTo(x, y + 2, x - capW * 0.6, y + 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
     }
   }
+}
+
+// Color utilities — clamp + adjust hex/rgb-ish color
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const h = hex.replace("#", "");
+  const v = h.length === 3
+    ? h.split("").map((c) => c + c).join("")
+    : h;
+  const num = parseInt(v, 16);
+  return { r: (num >> 16) & 0xff, g: (num >> 8) & 0xff, b: num & 0xff };
+}
+function lighten(hex: string, amt: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  const f = (c: number) => Math.round(c + (255 - c) * amt);
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
+}
+function darken(hex: string, amt: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  const f = (c: number) => Math.round(c * (1 - amt));
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
 }
 
 function drawForestSides(
