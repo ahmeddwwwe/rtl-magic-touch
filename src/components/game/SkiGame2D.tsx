@@ -148,11 +148,11 @@ const LEVELS: LevelConfig[] = [
 
 // Reward tiers — based on TOTAL score across all levels
 const REWARD_TIERS = [
-  { score: 500,   stars: 1, hours: 1, label: "ساعة مجانية", code: "SKI-BRONZE" },
-  { score: 1500,  stars: 2, hours: 3, label: "٣ ساعات مجانية", code: "SKI-SILVER" },
-  { score: 3500,  stars: 3, hours: 6, label: "٦ ساعات مجانية", code: "SKI-GOLD" },
-  { score: 7000,  stars: 4, hours: 12, label: "يوم كامل مجاني", code: "SKI-PLATINUM" },
-  { score: 12000, stars: 5, hours: 24, label: "يومان كاملان مجاناً", code: "SKI-DIAMOND" },
+  { score: 100000,  stars: 1, hours: 0, label: "خصم 10%",        code: "SKI-BRONZE" },
+  { score: 250000,  stars: 2, hours: 0, label: "خصم 25%",        code: "SKI-SILVER" },
+  { score: 500000,  stars: 3, hours: 0, label: "خصم 50%",        code: "SKI-GOLD" },
+  { score: 750000,  stars: 4, hours: 0, label: "خصم 75%",        code: "SKI-PLATINUM" },
+  { score: 1000000, stars: 5, hours: 24, label: "يوم كامل مجاناً", code: "SKI-DIAMOND" },
 ];
 
 // ============================================================
