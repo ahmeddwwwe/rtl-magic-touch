@@ -926,12 +926,38 @@ export const SkiGame2D = () => {
         ctx.fillRect(0, 0, w, h);
       }
 
-      // Vignette
-      const vg = ctx.createRadialGradient(w / 2, h / 2, h * 0.4, w / 2, h / 2, h * 0.9);
+      // Color grading — subtle warm tint at top, cool at bottom
+      const cg = ctx.createLinearGradient(0, 0, 0, h);
+      cg.addColorStop(0, "rgba(255,210,160,0.06)");
+      cg.addColorStop(0.5, "rgba(255,255,255,0)");
+      cg.addColorStop(1, "rgba(80,120,180,0.08)");
+      ctx.fillStyle = cg;
+      ctx.globalCompositeOperation = "overlay";
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = "source-over";
+
+      // Cinematic vignette (radial + corner)
+      const vg = ctx.createRadialGradient(w / 2, h / 2, h * 0.35, w / 2, h / 2, h * 0.95);
       vg.addColorStop(0, "rgba(0,0,0,0)");
-      vg.addColorStop(1, "rgba(10,20,35,0.4)");
+      vg.addColorStop(0.6, "rgba(10,20,35,0.15)");
+      vg.addColorStop(1, "rgba(5,10,20,0.55)");
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, w, h);
+
+      // Subtle film-grain noise (cheap, 1 pass)
+      ctx.save();
+      ctx.globalAlpha = 0.04;
+      ctx.fillStyle = "#ffffff";
+      const grainStep = 7;
+      const seed = Math.floor(s.t * 30);
+      for (let gx = 0; gx < w; gx += grainStep) {
+        for (let gy = 0; gy < h; gy += grainStep) {
+          if (((gx * 73856093) ^ (gy * 19349663) ^ seed) % 17 === 0) {
+            ctx.fillRect(gx, gy, 1, 1);
+          }
+        }
+      }
+      ctx.restore();
     };
 
     raf = requestAnimationFrame(loop);
@@ -2526,31 +2552,76 @@ function drawParticles(
     const x = wx(p.x);
     const y = wy(p.y);
     if (p.kind === "flake") {
-      ctx.fillStyle = `rgba(255,255,255,0.75)`;
-      ctx.beginPath();
-      ctx.arc(x, y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+      // Larger flakes get a 6-pointed star shape with soft glow
+      if (p.size > 2) {
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "rgba(255,255,255,0.45)";
+        ctx.beginPath();
+        ctx.arc(x, y, p.size + 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.95)";
+        ctx.lineWidth = 1;
+        ctx.lineCap = "round";
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI;
+          ctx.beginPath();
+          ctx.moveTo(x - Math.cos(a) * p.size * 1.6, y - Math.sin(a) * p.size * 1.6);
+          ctx.lineTo(x + Math.cos(a) * p.size * 1.6, y + Math.sin(a) * p.size * 1.6);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else {
+        ctx.fillStyle = `rgba(255,255,255,0.8)`;
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
     } else if (p.kind === "snow") {
       const a = clamp(p.life / p.maxLife, 0, 1);
-      ctx.fillStyle = `rgba(255,255,255,${a * 0.9})`;
+      // Soft glowing snow puff
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, p.size * 2.2);
+      grd.addColorStop(0, `rgba(255,255,255,${a})`);
+      grd.addColorStop(0.5, `rgba(245,250,255,${a * 0.6})`);
+      grd.addColorStop(1, `rgba(220,235,250,0)`);
+      ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(x, y, p.size * a, 0, Math.PI * 2);
+      ctx.arc(x, y, p.size * 2.2, 0, Math.PI * 2);
       ctx.fill();
     } else if (p.kind === "spark") {
       const a = clamp(p.life / p.maxLife, 0, 1);
-      ctx.fillStyle = `rgba(255,255,255,${a})`;
-      ctx.fillRect(x - 1.5, y - 1.5, 3, 3);
+      // Streaking spark with motion blur
+      ctx.save();
+      ctx.globalAlpha = a;
+      const ang = Math.atan2(p.vy, p.vx);
+      ctx.translate(x, y);
+      ctx.rotate(ang);
+      const trailG = ctx.createLinearGradient(-8, 0, 4, 0);
+      trailG.addColorStop(0, "rgba(255,255,255,0)");
+      trailG.addColorStop(1, "rgba(255,255,255,1)");
+      ctx.fillStyle = trailG;
+      ctx.fillRect(-8, -1, 12, 2);
+      ctx.restore();
     } else if (p.kind === "coin") {
       const a = clamp(p.life / p.maxLife, 0, 1);
-      ctx.fillStyle = `rgba(251,191,36,${a})`;
+      // Glowing gold sparkle
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, p.size * 2.5);
+      grd.addColorStop(0, `rgba(255,235,150,${a})`);
+      grd.addColorStop(0.4, `rgba(251,191,36,${a * 0.9})`);
+      grd.addColorStop(1, `rgba(251,191,36,0)`);
+      ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      ctx.arc(x, y, p.size * 2.5, 0, Math.PI * 2);
       ctx.fill();
     } else if (p.kind === "shield") {
       const a = clamp(p.life / p.maxLife, 0, 1);
-      ctx.fillStyle = `rgba(56,189,248,${a})`;
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, p.size * 2.5);
+      grd.addColorStop(0, `rgba(186,230,253,${a})`);
+      grd.addColorStop(0.5, `rgba(56,189,248,${a * 0.8})`);
+      grd.addColorStop(1, `rgba(56,189,248,0)`);
+      ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(x, y, p.size * a, 0, Math.PI * 2);
+      ctx.arc(x, y, p.size * 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
   }
