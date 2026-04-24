@@ -1873,33 +1873,65 @@ function drawObstacle(
 
   switch (o.kind) {
     case "tree": {
-      ctx.fillStyle = "#5a3a20";
-      ctx.fillRect(x - 3, y - 4, 6, 12);
+      // Trunk with bark gradient
+      const trunkG = ctx.createLinearGradient(x - 4, y, x + 4, y);
+      trunkG.addColorStop(0, "#2e1a08");
+      trunkG.addColorStop(0.5, "#6a4520");
+      trunkG.addColorStop(1, "#2e1a08");
+      ctx.fillStyle = trunkG;
+      ctx.fillRect(x - 3, y - 4, 6, 14);
+      // Foliage layers — rounded silhouette with side highlight + snow cap
       const layers = [
-        { w: 28, h: 30, off: 14, c: "#1e5a35" },
-        { w: 22, h: 26, off: 22, c: "#246b3f" },
-        { w: 16, h: 22, off: 30, c: "#2a7c4a" },
+        { w: 28, h: 32, off: 14, c: "#0f3a1e", hi: "#246b3a", sh: "#08240e" },
+        { w: 22, h: 28, off: 24, c: "#15522c", hi: "#2f8043", sh: "#0d3019" },
+        { w: 16, h: 22, off: 34, c: "#1e6b38", hi: "#43a05a", sh: "#114224" },
       ];
       for (const L of layers) {
+        // Base silhouette (rounded triangle)
         ctx.fillStyle = L.c;
         ctx.beginPath();
         ctx.moveTo(x - L.w, y - L.off + 6);
-        ctx.lineTo(x + L.w, y - L.off + 6);
-        ctx.lineTo(x, y - L.off - L.h);
+        ctx.quadraticCurveTo(x - L.w * 0.6, y - L.off - L.h * 0.4, x, y - L.off - L.h);
+        ctx.quadraticCurveTo(x + L.w * 0.6, y - L.off - L.h * 0.4, x + L.w, y - L.off + 6);
+        ctx.quadraticCurveTo(x, y - L.off + 2, x - L.w, y - L.off + 6);
         ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.55)";
+        // Right-side shadow
+        ctx.fillStyle = L.sh;
         ctx.beginPath();
-        ctx.moveTo(x - L.w * 0.7, y - L.off + 4);
-        ctx.lineTo(x - L.w * 0.3, y - L.off - L.h * 0.5);
-        ctx.lineTo(x - L.w * 0.1, y - L.off - L.h * 0.4);
-        ctx.lineTo(x + L.w * 0.1, y - L.off + 2);
+        ctx.moveTo(x, y - L.off - L.h);
+        ctx.quadraticCurveTo(x + L.w * 0.6, y - L.off - L.h * 0.4, x + L.w, y - L.off + 6);
+        ctx.quadraticCurveTo(x + L.w * 0.3, y - L.off, x + L.w * 0.1, y - L.off - L.h * 0.5);
+        ctx.closePath();
+        ctx.fill();
+        // Left-side highlight (sun upper-left)
+        ctx.fillStyle = L.hi;
+        ctx.beginPath();
+        ctx.moveTo(x - L.w * 0.85, y - L.off + 4);
+        ctx.quadraticCurveTo(x - L.w * 0.5, y - L.off - L.h * 0.45, x - L.w * 0.05, y - L.off - L.h * 0.85);
+        ctx.lineTo(x - L.w * 0.25, y - L.off - L.h * 0.4);
+        ctx.lineTo(x - L.w * 0.55, y - L.off);
+        ctx.closePath();
+        ctx.fill();
+        // Snow on top of each layer
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.beginPath();
+        ctx.moveTo(x - L.w * 0.55, y - L.off - L.h * 0.45);
+        ctx.quadraticCurveTo(x - L.w * 0.3, y - L.off - L.h - 2, x, y - L.off - L.h);
+        ctx.quadraticCurveTo(x + L.w * 0.3, y - L.off - L.h - 2, x + L.w * 0.55, y - L.off - L.h * 0.45);
+        ctx.quadraticCurveTo(x + L.w * 0.25, y - L.off - L.h * 0.55, x, y - L.off - L.h * 0.5);
+        ctx.quadraticCurveTo(x - L.w * 0.25, y - L.off - L.h * 0.55, x - L.w * 0.55, y - L.off - L.h * 0.45);
         ctx.closePath();
         ctx.fill();
       }
+      // Tip snowball
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
-      ctx.arc(x, y - 52, 4, 0, Math.PI * 2);
+      ctx.arc(x, y - 56, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(180,210,235,0.7)";
+      ctx.beginPath();
+      ctx.arc(x + 1.5, y - 55, 2, 0, Math.PI * 2);
       ctx.fill();
       break;
     }
