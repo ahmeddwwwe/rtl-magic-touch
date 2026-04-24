@@ -1515,6 +1515,46 @@ const VictoryScreen = ({ totalScore, best, onPlayAgain, onMenu }: { totalScore: 
 // Drawing primitives
 // ============================================================
 
+// Drifting volumetric clouds — soft, layered, parallax
+function drawClouds(
+  ctx: CanvasRenderingContext2D,
+  w: number, horizonY: number,
+  t: number, fog: number,
+) {
+  ctx.save();
+  const baseAlpha = 0.55 - fog * 0.6;
+  if (baseAlpha <= 0) { ctx.restore(); return; }
+  // Three layers at different depths/speeds
+  const layers = [
+    { count: 3, speed: 8,  yBase: horizonY * 0.18, scale: 1.6, alpha: baseAlpha * 0.5 },
+    { count: 4, speed: 14, yBase: horizonY * 0.34, scale: 1.2, alpha: baseAlpha * 0.7 },
+    { count: 5, speed: 22, yBase: horizonY * 0.55, scale: 0.9, alpha: baseAlpha * 0.85 },
+  ];
+  for (let li = 0; li < layers.length; li++) {
+    const L = layers[li];
+    for (let i = 0; i < L.count; i++) {
+      const seed = i * 173 + li * 37;
+      const phase = (seed * 0.013) % 1;
+      const cx = ((phase * w + t * L.speed) % (w + 240)) - 120;
+      const cy = L.yBase + Math.sin(t * 0.2 + seed) * 8;
+      const rx = (50 + (seed % 40)) * L.scale;
+      const ry = rx * 0.42;
+      // Soft puffy cloud built from 4 stacked ellipses
+      const grd = ctx.createRadialGradient(cx, cy - ry * 0.3, 4, cx, cy, rx);
+      grd.addColorStop(0, `rgba(255,255,255,${L.alpha})`);
+      grd.addColorStop(0.6, `rgba(245,250,255,${L.alpha * 0.6})`);
+      grd.addColorStop(1, `rgba(220,232,245,0)`);
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.ellipse(cx - rx * 0.45, cy + ry * 0.2, rx * 0.65, ry * 0.85, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + rx * 0.4,  cy + ry * 0.25, rx * 0.55, ry * 0.7, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy - ry * 0.1, rx * 0.85, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 function drawSkyline(
   ctx: CanvasRenderingContext2D,
   w: number, horizonY: number,
