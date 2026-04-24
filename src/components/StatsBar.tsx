@@ -6,7 +6,7 @@ type Stat = { target: number; labelKey: TranslationKey; suffixKey?: TranslationK
 
 const stats: Stat[] = [
   { target: 2026, labelKey: "stats.openYear" },
-  { target: 5000, labelKey: "stats.visitors", suffix: "+" },
+  { target: 100000, labelKey: "stats.visitors", suffix: "+" },
   { target: 2600, labelKey: "stats.altitude", suffixKey: "stats.suffix.m" },
   { target: 12, labelKey: "stats.activities" },
 ];
