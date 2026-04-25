@@ -1,4 +1,4 @@
-import { Facebook } from "lucide-react";
+import { Facebook, Instagram, Music2, AtSign, Youtube } from "lucide-react";
 import logo from "@/assets/logo.webp";
 import { useT } from "@/i18n/LanguageProvider";
 
@@ -27,6 +27,26 @@ export const Footer = () => {
                   Icon: Facebook,
                   label: "Facebook",
                   href: "https://www.facebook.com/profile.php?id=61572045308547",
+                },
+                {
+                  Icon: Instagram,
+                  label: "Instagram",
+                  href: "https://www.instagram.com/wadialrahawinter",
+                },
+                {
+                  Icon: Youtube,
+                  label: "YouTube",
+                  href: "https://youtube.com/@wadial-rahawintersportscenter",
+                },
+                {
+                  Icon: Music2,
+                  label: "TikTok",
+                  href: "https://www.tiktok.com/@wadi.alraha.winte",
+                },
+                {
+                  Icon: AtSign,
+                  label: "Threads",
+                  href: "https://www.threads.com/@wadialrahawinter",
                 },
               ].map(({ Icon, label, href }) => (
                 <a
