@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Music2, AtSign } from "lucide-react";
+import { Facebook } from "lucide-react";
 import logo from "@/assets/logo.webp";
 import { useT } from "@/i18n/LanguageProvider";
 
@@ -23,12 +23,20 @@ export const Footer = () => {
             </p>
             <div className="flex gap-3 mt-5">
               {[
-                { Icon: Facebook, label: "Facebook", href: "#" },
-                { Icon: Instagram, label: "Instagram", href: "#" },
-                { Icon: Music2, label: "TikTok", href: "#" },
-                { Icon: AtSign, label: "Threads", href: "#" },
+                {
+                  Icon: Facebook,
+                  label: "Facebook",
+                  href: "https://www.facebook.com/profile.php?id=61572045308547",
+                },
               ].map(({ Icon, label, href }) => (
-                <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="grid h-10 w-10 place-items-center rounded-full glass transition-spring hover:bg-gradient-ice hover:text-night hover:-translate-y-1">
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="grid h-10 w-10 place-items-center rounded-full glass transition-spring hover:bg-gradient-ice hover:text-night hover:-translate-y-1"
+                >
                   <Icon className="h-4 w-4" />
                 </a>
               ))}
