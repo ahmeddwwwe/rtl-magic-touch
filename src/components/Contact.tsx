@@ -10,7 +10,7 @@ type Item = { icon: typeof Phone; titleKey: TranslationKey; value: string; value
 const items: Item[] = [
   { icon: Phone, titleKey: "contact.phone.title", value: "01553440535", href: "tel:+201553440535" },
   { icon: MessageCircle, titleKey: "contact.whatsapp.title", value: "01553440535", href: "https://wa.me/201553440535" },
-  { icon: Mail, titleKey: "contact.email.title", value: "info@wadi-alraha.com", href: "mailto:info@wadi-alraha.com" },
+  { icon: Mail, titleKey: "contact.email.title", value: "wadialrahawintersportscenter@gmail.com", href: "mailto:wadialrahawintersportscenter@gmail.com" },
   { icon: MapPin, titleKey: "contact.location.title", value: "", valueKey: "contact.location.value", href: "https://maps.google.com/?q=28.5637,33.9519" },
 ];
 
