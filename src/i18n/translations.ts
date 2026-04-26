@@ -33,7 +33,7 @@ export const translations = {
   "stats.openYear": { en: "Opening Year", ar: "عام الافتتاح" },
   "stats.visitors": { en: "Visitors first month", ar: "زائر في الشهر الأول" },
   "stats.altitude": { en: "Meters above sea level", ar: "متر فوق سطح البحر" },
-  "stats.activities": { en: "Activities & facilities", ar: "نشاط ومرفق" },
+  "stats.activities": { en: "Staff members", ar: "عامل" },
   "stats.suffix.m": { en: "m", ar: "م" },
 
   // Video
