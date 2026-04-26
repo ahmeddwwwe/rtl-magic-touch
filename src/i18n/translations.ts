@@ -36,6 +36,10 @@ export const translations = {
   "stats.activities": { en: "Staff members", ar: "عامل" },
   "stats.suffix.m": { en: "m", ar: "م" },
 
+  // Music
+  "music.mute": { en: "Mute music", ar: "كتم الموسيقى" },
+  "music.unmute": { en: "Play music", ar: "تشغيل الموسيقى" },
+
   // Video
   "video.tag": { en: "🎬 Visual Tour", ar: "🎬 جولة بصرية" },
   "video.title.l1": { en: "Live", ar: "عش" },
