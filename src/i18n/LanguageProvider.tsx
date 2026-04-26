@@ -52,7 +52,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   );
   const t = useCallback(
     (key: TranslationKey) => {
-      const entry = translations[key];
+      const entry = translations[key] as Record<Lang, string> | undefined;
       if (!entry) return String(key);
       return entry[lang] ?? entry.en ?? String(key);
     },
