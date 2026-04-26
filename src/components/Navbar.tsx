@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, Languages } from "lucide-react";
+import { Menu, X, Languages, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.webp";
-import { useLang, useT } from "@/i18n/LanguageProvider";
+import { useLang, useT, type Lang } from "@/i18n/LanguageProvider";
 
 type Props = { onBook: () => void; onPlay: () => void };
 
@@ -46,8 +46,9 @@ const linkKeys = [
 export const Navbar = ({ onBook, onPlay }: Props) => {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const t = useT();
-  const { lang, toggle } = useLang();
+  const { lang, setLang } = useLang();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -58,21 +59,68 @@ export const Navbar = ({ onBook, onPlay }: Props) => {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        setLangOpen(false);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  const langOptions: { code: Lang; label: string; flag: string }[] = [
+    { code: "en", label: "English", flag: "🇬🇧" },
+    { code: "ar", label: "العربية", flag: "🇪🇬" },
+    { code: "fr", label: "Français", flag: "🇫🇷" },
+  ];
+  const currentLang = langOptions.find((l) => l.code === lang) ?? langOptions[0];
+
   const LangBtn = ({ className = "" }: { className?: string }) => (
-    <button
-      onClick={toggle}
-      aria-label={t("lang.aria")}
-      className={`inline-flex items-center gap-1.5 rounded-full border border-frost/20 bg-night/40 backdrop-blur px-3 py-1.5 text-xs font-bold text-frost hover:border-gold/50 hover:text-gold transition-smooth ${className}`}
-    >
-      <Languages className="h-3.5 w-3.5" />
-      {lang === "en" ? "AR" : "EN"}
-    </button>
+    <div className={`relative ${className}`}>
+      <button
+        onClick={() => setLangOpen((v) => !v)}
+        aria-label={t("lang.aria")}
+        aria-expanded={langOpen}
+        className="inline-flex items-center gap-1.5 rounded-full border border-frost/20 bg-night/40 backdrop-blur px-3 py-1.5 text-xs font-bold text-frost hover:border-gold/50 hover:text-gold transition-smooth"
+      >
+        <Languages className="h-3.5 w-3.5" />
+        <span>{currentLang.flag}</span>
+        <span className="uppercase">{currentLang.code}</span>
+      </button>
+      {langOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setLangOpen(false)} aria-hidden />
+          <ul
+            role="listbox"
+            className="absolute end-0 mt-2 z-50 w-40 rounded-xl glass-strong border border-frost/20 shadow-soft overflow-hidden"
+          >
+            {langOptions.map((opt) => (
+              <li key={opt.code}>
+                <button
+                  role="option"
+                  aria-selected={lang === opt.code}
+                  onClick={() => {
+                    setLang(opt.code);
+                    setLangOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium transition-smooth ${
+                    lang === opt.code
+                      ? "bg-gold/15 text-gold"
+                      : "text-frost/90 hover:bg-night/60 hover:text-gold"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="text-base">{opt.flag}</span>
+                    <span>{opt.label}</span>
+                  </span>
+                  {lang === opt.code && <Check className="h-3.5 w-3.5" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
   );
 
   return (

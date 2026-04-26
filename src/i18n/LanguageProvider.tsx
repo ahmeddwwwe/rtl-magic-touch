@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { translations, TranslationKey } from "./translations";
 
-export type Lang = "en" | "ar";
+export type Lang = "en" | "ar" | "fr";
+
+const LANGS: Lang[] = ["en", "ar", "fr"];
 
 type Ctx = {
   lang: Lang;
@@ -21,7 +23,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as Lang | null;
-      if (saved === "ar" || saved === "en") setLangState(saved);
+      if (saved && (LANGS as string[]).includes(saved)) setLangState(saved);
     } catch {
       // ignore
     }
@@ -40,10 +42,17 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, [lang]);
 
   const setLang = useCallback((l: Lang) => setLangState(l), []);
-  const toggle = useCallback(() => setLangState((p) => (p === "en" ? "ar" : "en")), []);
+  const toggle = useCallback(
+    () =>
+      setLangState((p) => {
+        const idx = LANGS.indexOf(p);
+        return LANGS[(idx + 1) % LANGS.length];
+      }),
+    [],
+  );
   const t = useCallback(
     (key: TranslationKey) => {
-      const entry = translations[key];
+      const entry = translations[key] as Record<Lang, string> | undefined;
       if (!entry) return String(key);
       return entry[lang] ?? entry.en ?? String(key);
     },
