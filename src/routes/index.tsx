@@ -16,6 +16,7 @@ import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { SnowCanvas } from "@/components/SnowCanvas";
 import { SnowCursor } from "@/components/SnowCursor";
+import { BackgroundMusic } from "@/components/BackgroundMusic";
 import { useRevealOnScroll } from "../hooks/useRevealOnScroll";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
@@ -76,6 +77,8 @@ function Index() {
         <Contact />
       </main>
       <Footer />
+
+      <BackgroundMusic />
 
       {/* Lazy-loaded modals — only loaded when opened */}
       {bookingOpen && (
