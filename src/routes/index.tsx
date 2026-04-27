@@ -68,7 +68,7 @@ function Index() {
         <StatsBar />
         <VideoShowcase />
         <About />
-        <Services />
+        <Services onBook={openBooking} />
         <Gallery />
         <Pricing onBook={openBooking} />
         <Offers onBook={openBooking} />

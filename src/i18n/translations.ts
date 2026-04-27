@@ -133,6 +133,63 @@ export const translations = {
   "svc.bonfire.tag": { en: "Unique experience", ar: "تجربة فريدة" , fr: "Expérience unique" },
   "svc.bonfire.stat": { en: "Under the stars", ar: "تحت النجوم" , fr: "Sous les étoiles" },
 
+  // Service Modal
+  "modal.close": { en: "Close", ar: "إغلاق" , fr: "Fermer" },
+  "modal.includes": { en: "What's included", ar: "ما يتضمنه" , fr: "Ce qui est inclus" },
+  "modal.bookCta": { en: "Book this experience", ar: "احجز هذه التجربة" , fr: "Réserver cette expérience" },
+  "modal.duration": { en: "Duration", ar: "المدة" , fr: "Durée" },
+  "modal.group": { en: "Group", ar: "المجموعة" , fr: "Groupe" },
+  "modal.level": { en: "Level", ar: "المستوى" , fr: "Niveau" },
+
+  // Service highlights
+  "svc.skiing.dur": { en: "2-6 hrs", ar: "٢-٦ ساعات" , fr: "2-6 h" },
+  "svc.skiing.grp": { en: "All ages", ar: "كل الأعمار" , fr: "Tous âges" },
+  "svc.skiing.lvl": { en: "Beginner→Pro", ar: "مبتدئ→محترف" , fr: "Débutant→Pro" },
+  "svc.skiing.h1": { en: "Multi-level slopes (12+ tracks)", ar: "مضامير بمستويات متعددة (+12)" , fr: "Pistes multi-niveaux (+12)" },
+  "svc.skiing.h2": { en: "Certified instructors", ar: "مدربون معتمدون" , fr: "Instructeurs certifiés" },
+  "svc.skiing.h3": { en: "Pro skis & boots included", ar: "زلاجات وأحذية احترافية" , fr: "Skis & chaussures pro" },
+  "svc.skiing.h4": { en: "Helmet & safety gear", ar: "خوذة ومعدات أمان" , fr: "Casque & équipement" },
+
+  "svc.freestyle.dur": { en: "1-3 hrs", ar: "١-٣ ساعات" , fr: "1-3 h" },
+  "svc.freestyle.grp": { en: "12+ years", ar: "+١٢ سنة" , fr: "12+ ans" },
+  "svc.freestyle.lvl": { en: "Intermediate", ar: "متوسط" , fr: "Intermédiaire" },
+  "svc.freestyle.h1": { en: "Snow-park with rails & jumps", ar: "حديقة ثلج مع قفزات وقضبان" , fr: "Snow-park rails & sauts" },
+  "svc.freestyle.h2": { en: "Jumps up to 8 meters", ar: "قفزات حتى ٨ أمتار" , fr: "Sauts jusqu'à 8 m" },
+  "svc.freestyle.h3": { en: "Trick coaching available", ar: "تدريب على الحركات الاحترافية" , fr: "Coaching figures dispo" },
+  "svc.freestyle.h4": { en: "GoPro rental for filming", ar: "تأجير GoPro للتصوير" , fr: "Location GoPro" },
+
+  "svc.icemaze.dur": { en: "45-60 min", ar: "٤٥-٦٠ د" , fr: "45-60 min" },
+  "svc.icemaze.grp": { en: "All ages", ar: "كل الأعمار" , fr: "Tous âges" },
+  "svc.icemaze.lvl": { en: "Easy", ar: "سهل" , fr: "Facile" },
+  "svc.icemaze.h1": { en: "Massive ice-wall maze", ar: "متاهة جدران جليدية ضخمة" , fr: "Labyrinthe géant en glace" },
+  "svc.icemaze.h2": { en: "Interactive LED lighting", ar: "إضاءة LED تفاعلية" , fr: "Éclairage LED interactif" },
+  "svc.icemaze.h3": { en: "Immersive sound design", ar: "تصميم صوتي غامر" , fr: "Ambiance sonore immersive" },
+  "svc.icemaze.h4": { en: "Magical at night", ar: "ساحرة ليلاً" , fr: "Magique la nuit" },
+
+  "svc.rental.dur": { en: "Hourly/Daily", ar: "بالساعة/اليوم" , fr: "Heure/Jour" },
+  "svc.rental.grp": { en: "Solo / Group", ar: "فردي / جماعي" , fr: "Solo / Groupe" },
+  "svc.rental.lvl": { en: "All levels", ar: "كل المستويات" , fr: "Tous niveaux" },
+  "svc.rental.h1": { en: "500+ items in stock", ar: "+٥٠٠ قطعة متاحة" , fr: "+500 articles dispo" },
+  "svc.rental.h2": { en: "Latest pro-grade gear", ar: "أحدث المعدات الاحترافية" , fr: "Équipement pro récent" },
+  "svc.rental.h3": { en: "Sizes for every age", ar: "مقاسات لكل الأعمار" , fr: "Tailles tous âges" },
+  "svc.rental.h4": { en: "Free fitting service", ar: "خدمة تركيب مجانية" , fr: "Réglage gratuit" },
+
+  "svc.spa.dur": { en: "60-90 min", ar: "٦٠-٩٠ د" , fr: "60-90 min" },
+  "svc.spa.grp": { en: "Adults", ar: "الكبار" , fr: "Adultes" },
+  "svc.spa.lvl": { en: "Relaxation", ar: "استرخاء" , fr: "Détente" },
+  "svc.spa.h1": { en: "Heated jacuzzi with mountain view", ar: "جاكوزي ساخن بإطلالة جبلية" , fr: "Jacuzzi chauffé vue montagne" },
+  "svc.spa.h2": { en: "Aromatherapy massage", ar: "مساج بالزيوت العطرية" , fr: "Massage aromathérapie" },
+  "svc.spa.h3": { en: "Sauna & steam room", ar: "ساونا وغرفة بخار" , fr: "Sauna & hammam" },
+  "svc.spa.h4": { en: "Herbal tea bar", ar: "بار شاي الأعشاب" , fr: "Bar à tisanes" },
+
+  "svc.bonfire.dur": { en: "Evening", ar: "أمسية" , fr: "Soirée" },
+  "svc.bonfire.grp": { en: "Up to 12", ar: "حتى ١٢ شخص" , fr: "Jusqu'à 12" },
+  "svc.bonfire.lvl": { en: "All ages", ar: "كل الأعمار" , fr: "Tous âges" },
+  "svc.bonfire.h1": { en: "Luxury Bedouin tents", ar: "خيام بدوية فاخرة" , fr: "Tentes bédouines de luxe" },
+  "svc.bonfire.h2": { en: "Traditional bonfire & tea", ar: "نار وشاي بدوي تقليدي" , fr: "Feu de camp & thé bédouin" },
+  "svc.bonfire.h3": { en: "Stargazing under clear skies", ar: "رصد النجوم في سماء صافية" , fr: "Observation des étoiles" },
+  "svc.bonfire.h4": { en: "Storytelling with locals", ar: "حكايات مع السكان المحليين" , fr: "Contes avec habitants" },
+
   // Gallery
   "gallery.tag": { en: "📸 Photo Gallery", ar: "📸 معرض الصور" , fr: "📸 Galerie Photo" },
   "gallery.title.l1": { en: "Inside the", ar: "داخل" , fr: "À l'intérieur" },

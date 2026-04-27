@@ -472,3 +472,24 @@ main > div > section {
 body:has([data-state="open"][role="dialog"]) {
   scroll-snap-type: none;
 }
+
+/* ============================================================
+   Service Modal — Spectacular open animations
+============================================================ */
+@keyframes service-burst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(0); }
+  15%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--burst-x, 0)), calc(-50% + var(--burst-y, 0))) scale(0.6) rotate(var(--burst-rot, 0)); }
+}
+
+@keyframes ken-burns {
+  0%   { transform: scale(1.05) translate(0, 0); }
+  100% { transform: scale(1.18) translate(-2%, -1%); }
+}
+.animate-ken-burns { animation: ken-burns 8s ease-out forwards; }
+
+@keyframes shimmer-once {
+  0%   { transform: translateX(-100%) skewX(-20deg); }
+  100% { transform: translateX(200%)  skewX(-20deg); }
+}
+.animate-shimmer-once { animation: shimmer-once 1.6s ease-out 0.3s forwards; }
