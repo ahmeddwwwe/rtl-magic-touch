@@ -10,7 +10,7 @@ import { Services } from "@/components/Services";
 import { Gallery } from "@/components/Gallery";
 import { Pricing } from "@/components/Pricing";
 import { Offers } from "@/components/Offers";
-import { Testimonials } from "@/components/Testimonials";
+import { SnowConditions } from "@/components/SnowConditions";
 import { CTA } from "@/components/CTA";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
@@ -72,7 +72,7 @@ function Index() {
         <Gallery />
         <Pricing onBook={openBooking} />
         <Offers onBook={openBooking} />
-        <Testimonials />
+        <SnowConditions />
         <CTA onBook={openBooking} />
         <Contact />
       </main>
