@@ -33,7 +33,7 @@ export const translations = {
   "stats.openYear": { en: "Opening Year", ar: "عام الافتتاح" , fr: "Année d'ouverture" },
   "stats.visitors": { en: "Visitors first month", ar: "زائر في الشهر الأول" , fr: "Visiteurs le premier mois" },
   "stats.altitude": { en: "Meters above sea level", ar: "متر فوق سطح البحر" , fr: "Mètres au-dessus du niveau de la mer" },
-  "stats.activities": { en: "Staff members", ar: "عامل" , fr: "Entraîneurs" },
+  "stats.activities": { en: "Trainers", ar: "مدرب" , fr: "Entraîneurs" },
   "stats.suffix.m": { en: "m", ar: "م" , fr: "m" },
 
   // Music
@@ -69,8 +69,8 @@ export const translations = {
   "about.imgAlt.center": { en: "Wadi Al-Raha Center in Saint Catherine", ar: "مركز وادي الراحة في سانت كاترين" , fr: "Centre Wadi Al-Raha à Sainte-Catherine" },
   "about.imgAlt.lobby": { en: "Reception lobby", ar: "صالة الاستقبال" , fr: "Hall de réception" },
   "about.imgAlt.equipment": { en: "Professional equipment", ar: "المعدات الاحترافية" , fr: "Équipement professionnel" },
-  "about.stat1.n": { en: "15", ar: "١٥" , fr: "15" },
-  "about.stat1.l": { en: "Certified instructors", ar: "مدرب معتمد" , fr: "Instructeurs certifiés" },
+  "about.stat1.n": { en: "16", ar: "١٦" , fr: "16" },
+  "about.stat1.l": { en: "Certified trainers", ar: "مدرب معتمد" , fr: "Entraîneurs certifiés" },
   "about.stat2.n": { en: "8", ar: "٨" , fr: "8" },
   "about.stat2.l": { en: "Ski tracks", ar: "مضامير تزلج" , fr: "Pistes de ski" },
   "about.stat3.n": { en: "24/7", ar: "٢٤/٧" , fr: "24/7" },
