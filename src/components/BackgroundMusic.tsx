@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { useT } from "@/i18n/LanguageProvider";
+import ambientMusicAsset from "@/assets/desert-mystic2.mp3.asset.json";
 
-const AUDIO_SRC = "/audio/ambient.mp3";
+const AUDIO_SRC = ambientMusicAsset.url;
 const STORAGE_KEY = "wadi-music-muted";
 
 export const BackgroundMusic = () => {
