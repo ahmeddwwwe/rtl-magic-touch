@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Check, Crown, Snowflake, Mountain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n/LanguageProvider";
@@ -5,10 +6,12 @@ import type { TranslationKey } from "@/i18n/translations";
 
 type Props = { onBook: () => void };
 
+type Tier = "egyptian" | "foreigner" | "average";
+
 type Plan = {
   nameKey: TranslationKey;
   subtitleKey: TranslationKey;
-  price: string;
+  prices: Record<Tier, string>;
   icon: typeof Snowflake;
   features: TranslationKey[];
   featured: boolean;
@@ -16,16 +19,26 @@ type Plan = {
 };
 
 const plans: Plan[] = [
-  { nameKey: "pricing.basic.name", subtitleKey: "pricing.basic.subtitle", price: "2,500", icon: Snowflake,
+  { nameKey: "pricing.basic.name", subtitleKey: "pricing.basic.subtitle",
+    prices: { egyptian: "1,500", foreigner: "6,500", average: "2,500" }, icon: Snowflake,
     features: ["pricing.basic.f1", "pricing.basic.f2", "pricing.basic.f3", "pricing.basic.f4"], featured: false },
-  { nameKey: "pricing.premium.name", subtitleKey: "pricing.premium.subtitle", price: "4,500", icon: Mountain,
+  { nameKey: "pricing.premium.name", subtitleKey: "pricing.premium.subtitle",
+    prices: { egyptian: "2,500", foreigner: "12,500", average: "4,500" }, icon: Mountain,
     features: ["pricing.premium.f1", "pricing.premium.f2", "pricing.premium.f3", "pricing.premium.f4"], featured: true, badgeKey: "pricing.premium.badge" },
-  { nameKey: "pricing.vip.name", subtitleKey: "pricing.vip.subtitle", price: "7,500", icon: Crown,
-    features: ["pricing.vip.f1", "pricing.vip.f2", "pricing.vip.f3", "pricing.vip.f4", "pricing.vip.f5"], featured: false, badgeKey: "pricing.vip.badge" },
+  { nameKey: "pricing.vip.name", subtitleKey: "pricing.vip.subtitle",
+    prices: { egyptian: "4,000", foreigner: "21,500", average: "7,500" }, icon: Crown,
+    features: ["pricing.vip.f1", "pricing.vip.f2", "pricing.vip.f3", "pricing.vip.f4"], featured: false, badgeKey: "pricing.vip.badge" },
+];
+
+const tiers: { key: Tier; labelKey: TranslationKey }[] = [
+  { key: "egyptian", labelKey: "pricing.tier.egyptian" },
+  { key: "foreigner", labelKey: "pricing.tier.foreigner" },
+  { key: "average", labelKey: "pricing.tier.average" },
 ];
 
 export const Pricing = ({ onBook }: Props) => {
   const t = useT();
+  const [tier, setTier] = useState<Tier>("egyptian");
   return (
     <section id="pricing" className="relative py-24 md:py-32">
       <div className="container">
@@ -33,6 +46,21 @@ export const Pricing = ({ onBook }: Props) => {
           <span className="inline-block rounded-full border border-border/60 bg-gold/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-gold">{t("pricing.tag")}</span>
           <h2 className="mt-4 text-4xl md:text-5xl font-black">{t("pricing.title.l1")} <span className="text-gradient-aurora">{t("pricing.title.l2")}</span></h2>
           <p className="mt-4 text-muted-foreground max-w-lg mx-auto">{t("pricing.subtitle")}</p>
+          <div className="mt-8 inline-flex rounded-full border border-border/60 bg-card/60 p-1 backdrop-blur">
+            {tiers.map((tt) => (
+              <button
+                key={tt.key}
+                onClick={() => setTier(tt.key)}
+                className={`px-5 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-spring ${
+                  tier === tt.key
+                    ? "bg-gradient-gold text-night shadow-gold"
+                    : "text-muted-foreground hover:text-frost"
+                }`}
+              >
+                {t(tt.labelKey)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3 max-w-6xl mx-auto">
@@ -59,7 +87,7 @@ export const Pricing = ({ onBook }: Props) => {
               </div>
               <div className="text-center mb-6">
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className={`text-5xl font-black ${p.featured ? "text-gradient-gold" : "text-frost"}`}>{p.price}</span>
+                  <span className={`text-5xl font-black ${p.featured ? "text-gradient-gold" : "text-frost"}`}>{p.prices[tier]}</span>
                   <span className="text-muted-foreground font-medium">{t("pricing.currency")}</span>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">{t("pricing.perPerson")}</div>
